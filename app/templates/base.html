@@ -7,6 +7,47 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+<!-- Accordion Styles Added Here -->
+<style>
+  .nav-label {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+  }
+  
+  .nav-label::after {
+    content: '▼';
+    font-size: 0.7em;
+    opacity: 0.7;
+    transition: transform 0.3s ease;
+  }
+  
+  .nav-group.collapsed .nav-label::after {
+    transform: rotate(-90deg);
+  }
+
+  /* Target all links inside the nav-group for smooth animation */
+  .nav-group .nav-link {
+    transition: max-height 0.3s ease, opacity 0.2s ease, padding 0.3s ease, margin 0.3s ease;
+    max-height: 60px; /* Safely accommodates a standard link height */
+    opacity: 1;
+    overflow: hidden; /* Prevents text from spilling out during the slide up */
+  }
+  
+  /* Collapse state overrides */
+  .nav-group.collapsed .nav-link {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    border: none;
+  }
+</style>
 </head>
 <body>
 <div class="shell">
@@ -83,8 +124,7 @@
         Invoices
       </a>
     </div>
-    <div class="nav-group">
-      <div class="nav-label">Logout</div>
+    <div class="nav-Link">
       <a class="nav-link" href="{{ url_for('auth.logout') }}">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
          stroke="currentColor" stroke-width="2"
@@ -125,6 +165,28 @@
   </div>
 </div>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+<!-- Accordion Script Added Here -->
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const groups = document.querySelectorAll('.nav-group');
+    
+    groups.forEach(group => {
+      // Collapse by default unless it contains the currently active link
+      if (!group.querySelector('.active')) {
+        group.classList.add('collapsed');
+      }
+      
+      const label = group.querySelector('.nav-label');
+      if (label) {
+        label.addEventListener('click', function() {
+          group.classList.toggle('collapsed');
+        });
+      }
+    });
+  });
+</script>
+
 {% block scripts %}{% endblock %}
 </body>
 </html>
