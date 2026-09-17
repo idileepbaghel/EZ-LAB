@@ -2,523 +2,468 @@
 {% block title %}Departments — Meridian HMS{% endblock %}
 {% block crumb %}Master{% endblock %}
 {% block page_title %}Departments{% endblock %}
+
 {% block content %}
 
 <div class="panel">
+  <div class="panel-head">
+    <h2>Department list</h2>
+    <button class="btn btn-primary btn-sm" type="button" onclick="openNewDepartmentModal()">+ New department</button>
+  </div>
 
-    <!-- Panel Header -->
-    <div class="panel-head">
-        <h2>Department list</h2>
+  <div class="panel-body no-pad">
+    <div class="toolbar" style="padding: 16px 20px; margin-bottom: 16px; justify-content: flex-start; gap: 12px;">
+      <div class="search-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="7"/>
+          <path d="M20 20L16.65 16.65"/>
+        </svg>
+        <input id="departmentSearch" type="text" placeholder="Search departments" aria-label="Search departments">
+      </div>
 
-        <button class="btn btn-primary btn-sm" type="button" onclick="openNewDepartmentModal()">
-            + New department
+      <div style="min-width: 160px;">
+        <select id="typeFilter"
+                aria-label="Filter by type"
+                style="width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink);">
+          <option value="all">All types</option>
+          <option value="laboratory">Laboratory</option>
+          <option value="pathology">Pathology</option>
+          <option value="radiology">Radiology</option>
+          <option value="consultation">Consultation</option>
+        </select>
+      </div>
+
+      <div style="min-width: 160px;">
+        <select id="statusFilter"
+                aria-label="Filter by status"
+                style="width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink);">
+          <option value="all">All statuses</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Code</th>
+          <th>Type</th>
+          <th>Sort Order</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+
+      <tbody id="departmentTableBody">
+        {% for dept in departments %}
+        <tr
+          data-status="{{ dept.status }}"
+          data-type="{{ dept.type or 'laboratory' }}"
+          data-search="{{ dept.name }} {{ dept.code or '' }} {{ dept.type or '' }}"
+          {% if dept.status == 'Inactive' %}
+          style="background:rgba(75, 79, 83, 0.17);"
+          {% endif %}
+        >
+          <td class="mono">{{ dept.id }}</td>
+
+          <td>{{ dept.name }}</td>
+
+          <td class="mono">{{ dept.code or '—' }}</td>
+
+          <td>
+            {% if dept.type == 'laboratory' %}
+              Laboratory
+            {% elif dept.type == 'pathology' %}
+              Pathology
+            {% elif dept.type == 'radiology' %}
+              Radiology
+            {% elif dept.type == 'consultation' %}
+              Consultation
+            {% else %}
+              {{ dept.type or 'Laboratory' }}
+            {% endif %}
+          </td>
+
+          <td>{{ dept.sort_order }}</td>
+
+          <td>
+            {% if dept.status == 'Active' %}
+              <span
+                style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600; line-height:1; background:rgba(25,135,84,0.12); color:#198754;"
+              >
+                Active
+              </span>
+            {% else %}
+              <span
+                style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600; line-height:1; background:rgba(220,53,69,0.12); color:#dc3545;"
+              >
+                Inactive
+              </span>
+            {% endif %}
+          </td>
+
+          <td>
+            <div class="actions-row">
+
+              <button
+                class="btn btn-info btn-sm"
+                type="button"
+                data-id="{{ dept.id }}"
+                data-name="{{ dept.name }}"
+                data-code="{{ dept.code or '' }}"
+                data-type="{{ dept.type or 'laboratory' }}"
+                data-sort-order="{{ dept.sort_order }}"
+                data-status="{{ dept.status }}"
+                onclick="openEditModal(this)"
+              >
+                Edit
+              </button>
+
+              <button
+                class="btn btn-danger btn-sm"
+                type="button"
+                onclick="deleteDepartment('{{ dept.id }}', '{{ dept.name|e }}')"
+              >
+                Delete
+              </button>
+
+            </div>
+          </td>
+        </tr>
+
+        {% else %}
+        <tr class="empty-row">
+          <td colspan="7">No departments found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- New department modal -->
+<div
+  id="newDepartmentModal"
+  style="display:none; position:fixed; inset:0; background:rgba(16,24,20,0.48); z-index:999; align-items:center; justify-content:center; padding:20px;"
+>
+  <div
+    style="width:min(600px, 100%); max-height:calc(100vh - 40px); overflow-y:auto; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); box-shadow:0 16px 40px rgba(22,36,31,0.20);"
+  >
+    <div class="panel-head" style="padding:18px 22px;">
+      <div>
+        <h2>New department</h2>
+        <p style="margin:3px 0 0; font-size:12.5px;">
+          Add a new department to the hospital.
+        </p>
+      </div>
+
+      <button
+        class="btn btn-secondary btn-sm"
+        type="button"
+        onclick="closeNewDepartmentModal()"
+      >
+        Close
+      </button>
+    </div>
+
+    <form
+      method="POST"
+      action="{{ url_for('master.departments') }}"
+      style="padding:22px;"
+    >
+      <div class="field">
+        <label for="department-name">Department Name</label>
+        <input
+          id="department-name"
+          type="text"
+          name="name"
+          placeholder="e.g. Cardiology"
+          maxlength="100"
+          required
+        >
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="department-code">Department Code</label>
+          <input
+            id="department-code"
+            type="text"
+            name="code"
+            placeholder="e.g. CARD"
+            maxlength="50"
+            required
+          >
+        </div>
+
+        <div class="field">
+          <label for="department-type">Type</label>
+          <select id="department-type" name="type" required>
+            <option value="laboratory" selected>Laboratory</option>
+            <option value="pathology">Pathology</option>
+            <option value="radiology">Radiology</option>
+            <option value="consultation">Consultation</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="department-sort-order">Sort Order</label>
+          <input
+            id="department-sort-order"
+            type="number"
+            name="sort_order"
+            value="0"
+            min="0"
+            placeholder="0"
+            required
+          >
+        </div>
+
+        <div class="field">
+          <label for="department-status">Status</label>
+          <select id="department-status" name="status" required>
+            <option value="Active" selected>Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+
+      <div
+        class="actions-row"
+        style="justify-content:flex-end; margin-top:24px; padding-top:16px; border-top:1px solid var(--line);"
+      >
+        <button
+          class="btn btn-secondary"
+          type="button"
+          onclick="closeNewDepartmentModal()"
+        >
+          Cancel
         </button>
-    </div>
 
-    <div class="panel-body no-pad">
-
-        <!-- Search / Filter Toolbar -->
-        <div class="toolbar" style="padding: 16px 20px; margin-bottom: 16px;">
-
-            <!-- Search -->
-            <div class="search-box">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="M20 20L16.65 16.65" />
-                </svg>
-
-                <input id="departmentSearch" type="text" placeholder="Search departments"
-                    aria-label="Search departments">
-            </div>
-
-            <!-- Status Filter -->
-            <div style="min-width: 180px;">
-                <select id="statusFilter" aria-label="Filter by status" style="
-            width: 100%;
-            padding: 9px 11px;
-            border: 1px solid var(--line);
-            border-radius: var(--radius-sm);
-            background: var(--surface);
-            color: var(--ink);
-          ">
-
-                    <option value="all">All statuses</option>
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                </select>
-            </div>
-
-        </div>
-
-        <!-- Department Table -->
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Code</th>
-                    <th>Sort Order</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-
-            <tbody id="departmentTableBody">
-
-                {% for dept in departments %}
-
-                <tr data-status="{{ dept.status }}" data-search="{{ dept.name }} {{ dept.code }}">
-
-                    <td class="mono">
-                        {{ dept.id }}
-                    </td>
-
-                    <td>
-                        {{ dept.name }}
-                    </td>
-
-                    <td class="mono">
-                        {{ dept.code or '—' }}
-                    </td>
-
-                    <td>
-                        {{ dept.sort_order }}
-                    </td>
-
-                    <td>
-                        {{ dept.status or 'Unknown' }}
-                    </td>
-
-                    <td>
-                        <div class="actions-row">
-
-                            <button class="btn btn-info btn-sm" type="button" data-id="{{ dept.id }}"
-                                data-name="{{ dept.name }}" data-code="{{ dept.code or '' }}"
-                                data-sort-order="{{ dept.sort_order }}" data-status="{{ dept.status }}"
-                                onclick="openEditModal(this)">
-                                Edit
-                            </button>
-
-                        </div>
-                    </td>
-
-                </tr>
-
-                {% else %}
-
-                <tr class="empty-row">
-                    <td colspan="6">
-                        No departments found.
-                    </td>
-                </tr>
-
-                {% endfor %}
-
-            </tbody>
-        </table>
-
-    </div>
+        <button class="btn btn-primary" type="submit">
+          Save department
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
+<!-- Edit department modal -->
+<div
+  id="editDepartmentModal"
+  style="display:none; position:fixed; inset:0; background:rgba(16,24,20,0.48); z-index:999; align-items:center; justify-content:center; padding:20px;"
+>
+  <div
+    style="width:min(600px, 100%); max-height:calc(100vh - 40px); overflow-y:auto; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); box-shadow:0 16px 40px rgba(22,36,31,0.20);"
+  >
+    <div class="panel-head" style="padding:18px 22px;">
+      <h2>Edit department</h2>
 
-<!-- ============================================================
-     NEW DEPARTMENT MODAL
-     ============================================================ -->
+      <button
+        class="btn btn-secondary btn-sm"
+        type="button"
+        onclick="closeEditModal()"
+      >
+        Close
+      </button>
+    </div>
 
-<div id="newDepartmentModal" style="
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(16, 24, 20, 0.48);
-    z-index: 999;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-  ">
+    <form
+      method="POST"
+      action="{{ url_for('master.departments') }}"
+      style="padding:22px;"
+    >
+      <input type="hidden" name="action" value="edit">
+      <input type="hidden" id="edit-dept-id" name="department_id">
 
-    <div style="
-      width: min(600px, 100%);
-      max-height: calc(100vh - 40px);
-      overflow-y: auto;
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: var(--radius-md);
-      box-shadow: 0 16px 40px rgba(22, 36, 31, 0.20);
-    ">
+      <div class="field">
+        <label for="edit-dept-name">Department Name</label>
+        <input
+          id="edit-dept-name"
+          type="text"
+          name="name"
+          maxlength="100"
+          required
+        >
+      </div>
 
-        <!-- Modal Header -->
-        <div class="panel-head" style="padding: 18px 22px;">
-
-            <div>
-                <h2>New department</h2>
-                <p style="margin: 3px 0 0; font-size: 12.5px;">
-                    Add a new department to the hospital.
-                </p>
-            </div>
-
-            <button class="btn btn-secondary btn-sm" type="button" onclick="closeNewDepartmentModal()">
-                Close
-            </button>
-
+      <div class="field-row">
+        <div class="field">
+          <label for="edit-dept-code">Department Code</label>
+          <input
+            id="edit-dept-code"
+            type="text"
+            name="code"
+            maxlength="50"
+            required
+          >
         </div>
 
+        <div class="field">
+          <label for="edit-dept-type">Type</label>
+          <select id="edit-dept-type" name="type" required>
+            <option value="laboratory">Laboratory</option>
+            <option value="pathology">Pathology</option>
+            <option value="radiology">Radiology</option>
+            <option value="consultation">Consultation</option>
+          </select>
+        </div>
+      </div>
 
-        <!-- Modal Form -->
-        <form method="POST" action="{{ url_for('master.departments') }}" style="padding: 22px;">
-
-            <!-- Department Name -->
-            <div class="field">
-
-                <label for="department-name">
-                    Department Name
-                </label>
-
-                <input id="department-name" type="text" name="name" placeholder="e.g. Cardiology" maxlength="100"
-                    required>
-
-            </div>
-
-
-            <!-- Code + Sort Order -->
-            <div class="field-row">
-
-                <div class="field">
-
-                    <label for="department-code">
-                        Department Code
-                    </label>
-
-                    <input id="department-code" type="text" name="code" placeholder="e.g. CARD" maxlength="50">
-
-                </div>
-
-
-                <div class="field">
-
-                    <label for="department-sort-order">
-                        Sort Order
-                    </label>
-
-                    <input id="department-sort-order" type="number" name="sort_order" value="0" min="0" placeholder="0"
-                        required>
-
-                </div>
-
-            </div>
-
-
-            <!-- Status -->
-            <div class="field">
-
-                <label for="department-status">
-                    Status
-                </label>
-
-                <select id="department-status" name="status" required>
-
-                    <option value="Active" selected>
-                        Active
-                    </option>
-
-                    <option value="Inactive">
-                        Inactive
-                    </option>
-
-                    <option value="Monitoring">
-                        Monitoring
-                    </option>
-
-                    <option value="Critical">
-                        Critical
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <!-- Modal Actions -->
-            <div class="actions-row" style="
-          justify-content: flex-end;
-          margin-top: 24px;
-          padding-top: 16px;
-          border-top: 1px solid var(--line);
-        ">
-
-                <button class="btn btn-secondary" type="button" onclick="closeNewDepartmentModal()">
-                    Cancel
-                </button>
-
-                <button class="btn btn-primary" type="submit">
-                    Save department
-                </button>
-
-            </div>
-
-        </form>
-
-    </div>
-</div>
-
-
-<!-- ============================================================
-     EDIT DEPARTMENT MODAL
-     ============================================================ -->
-
-<div id="editDepartmentModal" style="
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(16, 24, 20, 0.48);
-    z-index: 999;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-  ">
-
-    <div style="
-      width: min(600px, 100%);
-      max-height: calc(100vh - 40px);
-      overflow-y: auto;
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: var(--radius-md);
-      box-shadow: 0 16px 40px rgba(22, 36, 31, 0.20);
-    ">
-
-        <div class="panel-head" style="padding: 18px 22px;">
-
-            <h2>Edit department</h2>
-
-            <button class="btn btn-secondary btn-sm" type="button" onclick="closeEditModal()">
-                Close
-            </button>
-
+      <div class="field-row">
+        <div class="field">
+          <label for="edit-dept-sort">Sort Order</label>
+          <input
+            id="edit-dept-sort"
+            type="number"
+            name="sort_order"
+            min="0"
+            required
+          >
         </div>
 
+        <div class="field">
+          <label for="edit-dept-status">Status</label>
+          <select id="edit-dept-status" name="status" required>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
 
-        <form style="padding: 22px;">
+      <div
+        class="actions-row"
+        style="justify-content:flex-end; margin-top:24px; padding-top:16px; border-top:1px solid var(--line);"
+      >
+        <button
+          class="btn btn-secondary"
+          type="button"
+          onclick="closeEditModal()"
+        >
+          Cancel
+        </button>
 
-            <div class="field">
-
-                <label for="edit-dept-name">
-                    Department Name
-                </label>
-
-                <input id="edit-dept-name" type="text" name="name" maxlength="100">
-
-            </div>
-
-
-            <div class="field-row">
-
-                <div class="field">
-
-                    <label for="edit-dept-code">
-                        Department Code
-                    </label>
-
-                    <input id="edit-dept-code" type="text" name="code" maxlength="50">
-
-                </div>
-
-
-                <div class="field">
-
-                    <label for="edit-dept-sort">
-                        Sort Order
-                    </label>
-
-                    <input id="edit-dept-sort" type="number" name="sort_order" min="0">
-
-                </div>
-
-            </div>
-
-
-            <div class="field">
-
-                <label for="edit-dept-status">
-                    Status
-                </label>
-
-                <select id="edit-dept-status" name="status">
-
-                    <option value="Active">
-                        Active
-                    </option>
-
-                    <option value="Inactive">
-                        Inactive
-                    </option>
-
-                    <option value="Monitoring">
-                        Monitoring
-                    </option>
-
-                    <option value="Critical">
-                        Critical
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <div class="actions-row" style="
-          justify-content: flex-end;
-          margin-top: 24px;
-          padding-top: 16px;
-          border-top: 1px solid var(--line);
-        ">
-
-                <button class="btn btn-secondary" type="button" onclick="closeEditModal()">
-                    Cancel
-                </button>
-
-                <button class="btn btn-primary" type="submit">
-                    Save changes
-                </button>
-
-            </div>
-
-        </form>
-
-    </div>
+        <button class="btn btn-primary" type="submit">
+          Save changes
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+  function openNewDepartmentModal() {
+    const modal = document.getElementById('newDepartmentModal');
+    modal.style.display = 'flex';
+    document.getElementById('department-name').focus();
+  }
 
-    /* ============================================================
-       NEW DEPARTMENT MODAL
-       ============================================================ */
+  function closeNewDepartmentModal() {
+    document.getElementById('newDepartmentModal').style.display = 'none';
+  }
 
-    function openNewDepartmentModal() {
-        const modal = document.getElementById('newDepartmentModal');
+  function openEditModal(button) {
+    const modal = document.getElementById('editDepartmentModal');
+    document.getElementById('edit-dept-id').value = button.dataset.id || '';
+    document.getElementById('edit-dept-name').value = button.dataset.name || '';
+    document.getElementById('edit-dept-code').value = button.dataset.code || '';
+    document.getElementById('edit-dept-type').value = button.dataset.type || 'laboratory';
+    document.getElementById('edit-dept-sort').value = button.dataset.sortOrder || '';
+    document.getElementById('edit-dept-status').value = button.dataset.status || 'Active';
+    modal.style.display = 'flex';
+  }
 
-        modal.style.display = 'flex';
+  function closeEditModal() {
+    document.getElementById('editDepartmentModal').style.display = 'none';
+  }
 
-        document.getElementById('department-name').focus();
-    }
+  function deleteDepartment(departmentId, departmentName) {
+    Swal.fire({
+      title: 'Delete department?',
+      text: `Are you sure you want to delete "${departmentName}"?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete',
+      cancelButtonText: 'Cancel',
+      cancelButtonColor: '#6c757d',
+      confirmButtonColor: 'red',
+      reverseButtons: true
+    }).then(function(result) {
+      if (result.isConfirmed) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = "{{ url_for('master.departments') }}";
 
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = 'delete';
 
-    function closeNewDepartmentModal() {
-        document.getElementById('newDepartmentModal').style.display = 'none';
-    }
-    /* ============================================================
-       EDIT DEPARTMENT MODAL
-       ============================================================ */
-    function openEditModal(button) {
+        const idInput = document.createElement('input');
+        idInput.type = 'hidden';
+        idInput.name = 'department_id';
+        idInput.value = departmentId;
 
-        const modal = document.getElementById('editDepartmentModal');
-
-        document.getElementById('edit-dept-name').value =
-            button.dataset.name || '';
-
-        document.getElementById('edit-dept-code').value =
-            button.dataset.code || '';
-
-        document.getElementById('edit-dept-sort').value =
-            button.dataset.sortOrder || '';
-
-        document.getElementById('edit-dept-status').value =
-            button.dataset.status || 'Active';
-
-        modal.style.display = 'flex';
-    }
-
-    function closeEditModal() {
-        document.getElementById('editDepartmentModal').style.display = 'none';
-    }
-
-    /* ============================================================
-       SEARCH
-       ============================================================ */
-
-    const departmentSearch =
-        document.getElementById('departmentSearch');
-
-    const statusFilter =
-        document.getElementById('statusFilter');
-
-    const departmentRows =
-        document.querySelectorAll('#departmentTableBody tr[data-status]');
-
-    function filterDepartments() {
-
-        const searchValue =
-            departmentSearch.value.trim().toLowerCase();
-
-        const selectedStatus =
-            statusFilter.value;
-
-        departmentRows.forEach(function (row) {
-
-            const searchText =
-                row.dataset.search.toLowerCase();
-
-            const rowStatus =
-                row.dataset.status;
-
-            const matchesSearch =
-                searchText.includes(searchValue);
-
-            const matchesStatus =
-                selectedStatus === 'all' ||
-                rowStatus === selectedStatus;
-
-            row.style.display =
-                matchesSearch && matchesStatus
-                    ? ''
-                    : 'none';
-
-        });
-    }
-
-    departmentSearch.addEventListener(
-        'input',
-        filterDepartments
-    );
-    statusFilter.addEventListener(
-        'change',
-        filterDepartments
-    );
-
-    /* ============================================================
-       ESCAPE KEY
-       ============================================================ */
-
-    document.addEventListener('keydown', function (event) {
-
-        if (event.key === 'Escape') {
-
-            closeNewDepartmentModal();
-            closeEditModal();
-        }
+        form.appendChild(actionInput);
+        form.appendChild(idInput);
+        document.body.appendChild(form);
+        form.submit();
+      }
     });
-    /* ============================================================
-       CLICK OUTSIDE MODAL
-       ============================================================ */
-    document
-        .getElementById('newDepartmentModal')
-        .addEventListener('click', function (event) {
+  }
 
-            if (event.target === this) {
-                closeNewDepartmentModal();
-            }
+  const departmentSearch = document.getElementById('departmentSearch');
+  const typeFilter = document.getElementById('typeFilter');
+  const statusFilter = document.getElementById('statusFilter');
+  const departmentRows = document.querySelectorAll('#departmentTableBody tr[data-status]');
 
-        });
+  function filterDepartments() {
+    const searchValue = departmentSearch.value.trim().toLowerCase();
+    const selectedType = typeFilter.value;
+    const selectedStatus = statusFilter.value;
 
-    document
-        .getElementById('editDepartmentModal')
-        .addEventListener('click', function (event) {
+    departmentRows.forEach(function(row) {
+      const searchText = row.dataset.search.toLowerCase();
+      const rowType = row.dataset.type;
+      const rowStatus = row.dataset.status;
 
-            if (event.target === this) {
-                closeEditModal();
-            }
+      const matchesSearch = searchText.includes(searchValue);
+      const matchesType = selectedType === 'all' || rowType === selectedType;
+      const matchesStatus = selectedStatus === 'all' || rowStatus === selectedStatus;
 
-        });
+      row.style.display = matchesSearch && matchesType && matchesStatus ? '' : 'none';
+    });
+  }
+
+  departmentSearch.addEventListener('input', filterDepartments);
+  typeFilter.addEventListener('change', filterDepartments);
+  statusFilter.addEventListener('change', filterDepartments);
+
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+      closeNewDepartmentModal();
+      closeEditModal();
+    }
+  });
+
+  document.getElementById('newDepartmentModal').addEventListener('click', function(event) {
+    if (event.target === this) {
+      closeNewDepartmentModal();
+    }
+  });
+
+  document.getElementById('editDepartmentModal').addEventListener('click', function(event) {
+    if (event.target === this) {
+      closeEditModal();
+    }
+  });
 </script>
 
 {% endblock %}

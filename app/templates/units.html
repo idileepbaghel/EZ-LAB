@@ -1,0 +1,421 @@
+{% extends "base.html" %}
+{% block title %}Units — Meridian HMS{% endblock %}
+{% block crumb %}Master{% endblock %}
+{% block page_title %}Units{% endblock %}
+
+{% block content %}
+
+<div class="panel">
+  <div class="panel-head">
+    <h2>Unit list</h2>
+
+    <button
+      class="btn btn-primary btn-sm"
+      type="button"
+      onclick="openNewUnitModal()"
+    >
+      + New unit
+    </button>
+  </div>
+
+  <div class="panel-body no-pad">
+
+    <div
+      class="toolbar"
+      style="padding:16px 20px; margin-bottom:16px; justify-content:flex-start; gap:12px;"
+    >
+      <div class="search-box">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <circle cx="11" cy="11" r="7"/>
+          <path d="M20 20L16.65 16.65"/>
+        </svg>
+
+        <input
+          id="unitSearch"
+          type="text"
+          placeholder="Search units"
+          aria-label="Search units"
+        >
+      </div>
+
+      <div style="width:160px;">
+        <select
+          id="statusFilter"
+          aria-label="Filter by status"
+          style="width:100%; padding:9px 11px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--surface); color:var(--ink);"
+        >
+          <option value="all">All statuses</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Unit Name</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+
+      <tbody id="unitTableBody">
+        {% for unit in units %}
+        <tr
+          data-status="{{ unit.status or 'Active' }}"
+          data-search="{{ unit.unit_name }} {{ unit.status or '' }}"
+          {% if unit.status == 'Inactive' %}
+          style="background:rgba(75, 79, 83, 0.17);"
+          {% endif %}
+        >
+          <td class="mono">{{ unit.id }}</td>
+
+          <td>{{ unit.unit_name }}</td>
+
+          <td>
+            {% if unit.status == 'Active' %}
+              <span
+                style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600; line-height:1; background:rgba(25,135,84,0.12); color:#198754;"
+              >
+                Active
+              </span>
+            {% elif unit.status == 'Inactive' %}
+              <span
+                style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600; line-height:1; background:rgba(220,53,69,0.12); color:#dc3545;"
+              >
+                Inactive
+              </span>
+            {% else %}
+              <span
+                style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600; line-height:1; background:rgba(108,117,125,0.12); color:#6c757d;"
+              >
+                {{ unit.status or 'Unknown' }}
+              </span>
+            {% endif %}
+          </td>
+
+          <td>
+            <div class="actions-row">
+
+              <button
+                class="btn btn-info btn-sm"
+                type="button"
+                data-id="{{ unit.id }}"
+                data-unit-name="{{ unit.unit_name }}"
+                data-status="{{ unit.status or 'Active' }}"
+                onclick="openEditModal(this)"
+              >
+                Edit
+              </button>
+
+              <button
+                class="btn btn-danger btn-sm"
+                type="button"
+                data-id="{{ unit.id }}"
+                data-unit-name="{{ unit.unit_name }}"
+                onclick="deleteUnit(this)"
+              >
+                Delete
+              </button>
+
+            </div>
+          </td>
+        </tr>
+
+        {% else %}
+        <tr class="empty-row">
+          <td colspan="4">No units found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+  </div>
+</div>
+
+
+<!-- New unit modal -->
+<div
+  id="newUnitModal"
+  style="display:none; position:fixed; inset:0; background:rgba(16,24,20,0.48); z-index:999; align-items:center; justify-content:center; padding:20px;"
+>
+  <div
+    style="width:min(600px, 100%); max-height:calc(100vh - 40px); overflow-y:auto; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); box-shadow:0 16px 40px rgba(22,36,31,0.20);"
+  >
+
+    <div class="panel-head" style="padding:18px 22px;">
+      <div>
+        <h2>New unit</h2>
+
+        <p style="margin:3px 0 0; font-size:12.5px;">
+          Add a new result unit.
+        </p>
+      </div>
+
+      <button
+        class="btn btn-secondary btn-sm"
+        type="button"
+        onclick="closeNewUnitModal()"
+      >
+        Close
+      </button>
+    </div>
+
+    <form
+      method="POST"
+      action="{{ url_for('master.units') }}"
+      style="padding:22px;"
+    >
+
+      <input type="hidden" name="action" value="create">
+
+      <div class="field">
+        <label for="unit-name">Unit Name</label>
+
+        <input
+          id="unit-name"
+          type="text"
+          name="unit_name"
+          placeholder="e.g. mg/dL"
+          maxlength="50"
+          required
+        >
+      </div>
+
+      <div class="field">
+        <label for="unit-status">Status</label>
+
+        <select
+          id="unit-status"
+          name="status"
+          required
+        >
+          <option value="Active" selected>Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+      </div>
+
+      <div
+        class="actions-row"
+        style="justify-content:flex-end; margin-top:24px; padding-top:16px; border-top:1px solid var(--line);"
+      >
+        <button
+          class="btn btn-secondary"
+          type="button"
+          onclick="closeNewUnitModal()"
+        >
+          Cancel
+        </button>
+
+        <button
+          class="btn btn-primary"
+          type="submit"
+        >
+          Save unit
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+
+<!-- Edit unit modal -->
+<div
+  id="editUnitModal"
+  style="display:none; position:fixed; inset:0; background:rgba(16,24,20,0.48); z-index:999; align-items:center; justify-content:center; padding:20px;"
+>
+  <div
+    style="width:min(600px, 100%); max-height:calc(100vh - 40px); overflow-y:auto; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); box-shadow:0 16px 40px rgba(22,36,31,0.20);"
+  >
+
+    <div class="panel-head" style="padding:18px 22px;">
+      <h2>Edit unit</h2>
+
+      <button
+        class="btn btn-secondary btn-sm"
+        type="button"
+        onclick="closeEditModal()"
+      >
+        Close
+      </button>
+    </div>
+
+    <form
+      method="POST"
+      action="{{ url_for('master.units') }}"
+      style="padding:22px;"
+    >
+
+      <input type="hidden" name="action" value="edit">
+      <input type="hidden" id="edit-unit-id" name="unit_id">
+
+      <div class="field">
+        <label for="edit-unit-name">Unit Name</label>
+
+        <input
+          id="edit-unit-name"
+          type="text"
+          name="unit_name"
+          maxlength="50"
+          required
+        >
+      </div>
+
+      <div class="field">
+        <label for="edit-unit-status">Status</label>
+
+        <select
+          id="edit-unit-status"
+          name="status"
+          required
+        >
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+      </div>
+
+      <div
+        class="actions-row"
+        style="justify-content:flex-end; margin-top:24px; padding-top:16px; border-top:1px solid var(--line);"
+      >
+        <button
+          class="btn btn-secondary"
+          type="button"
+          onclick="closeEditModal()"
+        >
+          Cancel
+        </button>
+
+        <button
+          class="btn btn-primary"
+          type="submit"
+        >
+          Save changes
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+  function openNewUnitModal() {
+    const modal = document.getElementById('newUnitModal');
+    modal.style.display = 'flex';
+    document.getElementById('unit-name').focus();
+  }
+
+  function closeNewUnitModal() {
+    document.getElementById('newUnitModal').style.display = 'none';
+  }
+
+  function openEditModal(button) {
+    const modal = document.getElementById('editUnitModal');
+
+    document.getElementById('edit-unit-id').value = button.dataset.id || '';
+    document.getElementById('edit-unit-name').value = button.dataset.unitName || '';
+    document.getElementById('edit-unit-status').value = button.dataset.status || 'Active';
+
+    modal.style.display = 'flex';
+    document.getElementById('edit-unit-name').focus();
+  }
+
+  function closeEditModal() {
+    document.getElementById('editUnitModal').style.display = 'none';
+  }
+
+  function deleteUnit(button) {
+    const unitId = button.dataset.id;
+    const unitName = button.dataset.unitName;
+
+    Swal.fire({
+      title: 'Delete Unit?',
+      text: `Are you sure you want to delete "${unitName}"?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete it',
+      cancelButtonText: 'Cancel',
+      cancelButtonColor: '#6c757d',
+      confirmButtonColor: 'red',
+      reverseButtons: true,
+      focusCancel: true
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = "{{ url_for('master.units') }}";
+
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = 'delete';
+
+        const idInput = document.createElement('input');
+        idInput.type = 'hidden';
+        idInput.name = 'unit_id';
+        idInput.value = unitId;
+
+        form.appendChild(actionInput);
+        form.appendChild(idInput);
+        document.body.appendChild(form);
+        form.submit();
+      }
+    });
+  }
+
+  const unitSearch = document.getElementById('unitSearch');
+  const statusFilter = document.getElementById('statusFilter');
+  const unitRows = document.querySelectorAll('#unitTableBody tr[data-search]');
+
+  function filterUnits() {
+    const searchValue = unitSearch.value.trim().toLowerCase();
+    const selectedStatus = statusFilter.value;
+
+    unitRows.forEach(function(row) {
+      const searchText = row.dataset.search.toLowerCase();
+      const rowStatus = row.dataset.status;
+
+      const matchesSearch = searchText.includes(searchValue);
+      const matchesStatus = selectedStatus === 'all' || rowStatus === selectedStatus;
+
+      row.style.display = matchesSearch && matchesStatus ? '' : 'none';
+    });
+  }
+
+  unitSearch.addEventListener('input', filterUnits);
+  statusFilter.addEventListener('change', filterUnits);
+
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+      closeNewUnitModal();
+      closeEditModal();
+    }
+  });
+
+  document.getElementById('newUnitModal').addEventListener('click', function(event) {
+    if (event.target === this) {
+      closeNewUnitModal();
+    }
+  });
+
+  document.getElementById('editUnitModal').addEventListener('click', function(event) {
+    if (event.target === this) {
+      closeEditModal();
+    }
+  });
+</script>
+
+{% endblock %}
