@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Invoices — Meridian HMS{% endblock %}
+{% block crumb %}Billing{% endblock %}
+{% block page_title %}Invoices{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+  <div class="filter-tabs">
+    <a class="filter-tab {{ 'active' if status=='' }}" href="{{ url_for('main.invoices_list') }}">All</a>
+    <a class="filter-tab {{ 'active' if status=='Unpaid' }}" href="{{ url_for('main.invoices_list', status='Unpaid') }}">Unpaid</a>
+    <a class="filter-tab {{ 'active' if status=='Partially Paid' }}" href="{{ url_for('main.invoices_list', status='Partially Paid') }}">Partially Paid</a>
+    <a class="filter-tab {{ 'active' if status=='Paid' }}" href="{{ url_for('main.invoices_list', status='Paid') }}">Paid</a>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('main.invoice_new') }}">+ New invoice</a>
+</div>
+
+<div class="panel">
+  <div class="panel-body no-pad">
+    <table>
+      <thead><tr><th>Invoice #</th><th>Patient</th><th>Date</th><th>Total</th><th>Balance</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for inv in invoices %}
+        <tr>
+          <td class="mono"><a href="{{ url_for('main.invoice_view', invoice_id=inv.id) }}">{{ inv.invoice_no }}</a></td>
+          <td><a href="{{ url_for('main.patient_view', patient_id=inv.patient.id) }}">{{ inv.patient.full_name }}</a></td>
+          <td>{{ inv.created_at.strftime('%d %b %Y') }}</td>
+          <td>₹{{ '%.2f'|format(inv.total()) }}</td>
+          <td>₹{{ '%.2f'|format(inv.balance()) }}</td>
+          <td><span class="pill pill-{{ 'green' if inv.status=='Paid' else 'amber' if inv.status=='Partially Paid' else 'red' }}">{{ inv.status }}</span></td>
+        </tr>
+        {% else %}
+        <tr class="empty-row"><td colspan="6">No invoices found. <a href="{{ url_for('main.invoice_new') }}">Create one</a>.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

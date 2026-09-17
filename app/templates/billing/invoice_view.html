@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}{{ invoice.invoice_no }} — Meridian HMS{% endblock %}
+{% block crumb %}Billing / Invoices{% endblock %}
+{% block page_title %}Invoice {{ invoice.invoice_no }}{% endblock %}
+
+{% block content %}
+<div class="grid-2">
+  <div>
+    <div class="panel">
+      <div class="panel-head">
+        <h2>{{ invoice.patient.full_name }}</h2>
+        <span class="pill pill-{{ 'green' if invoice.status=='Paid' else 'amber' if invoice.status=='Partially Paid' else 'red' }}">{{ invoice.status }}</span>
+      </div>
+      <div class="panel-body">
+        <p style="margin-bottom:16px;">MRN <span class="mono">{{ invoice.patient.mrn }}</span> · Raised {{ invoice.created_at.strftime('%d %b %Y') }}</p>
+        <table>
+          <thead><tr><th>Description</th><th>Qty</th><th>Unit price</th><th>Amount</th></tr></thead>
+          <tbody>
+            {% for item in invoice.items %}
+            <tr>
+              <td>{{ item.description }}</td>
+              <td>{{ item.qty }}</td>
+              <td>₹{{ '%.2f'|format(item.unit_price) }}</td>
+              <td>₹{{ '%.2f'|format(item.amount()) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <div class="totals-box" style="margin-top:16px;">
+          <table>
+            <tr><td>Total</td><td style="text-align:right;">₹{{ '%.2f'|format(invoice.total()) }}</td></tr>
+            <tr><td>Paid</td><td style="text-align:right;">₹{{ '%.2f'|format(invoice.paid()) }}</td></tr>
+            <tr class="grand"><td>Balance due</td><td style="text-align:right;">₹{{ '%.2f'|format(invoice.balance()) }}</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Payment history</h2></div>
+      <div class="panel-body no-pad">
+        {% if invoice.payments %}
+        <table>
+          <thead><tr><th>Date</th><th>Method</th><th>Amount</th></tr></thead>
+          <tbody>
+            {% for pay in invoice.payments|sort(attribute='paid_at', reverse=True) %}
+            <tr>
+              <td>{{ pay.paid_at.strftime('%d %b %Y, %H:%M') }}</td>
+              <td>{{ pay.method }}</td>
+              <td>₹{{ '%.2f'|format(pay.amount) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state"><h3>No payments recorded</h3></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div>
+    {% if invoice.balance() > 0 %}
+    <div class="panel">
+      <div class="panel-head"><h2>Record payment</h2></div>
+      <div class="panel-body">
+        <form method="POST" action="{{ url_for('main.invoice_payment', invoice_id=invoice.id) }}">
+          <div class="field">
+            <label for="amount">Amount</label>
+            <input type="number" id="amount" name="amount" step="0.01" min="0.01" max="{{ invoice.balance() }}" value="{{ invoice.balance() }}" required>
+          </div>
+          <div class="field">
+            <label for="method">Payment method</label>
+            <select id="method" name="method">
+              <option>Cash</option>
+              <option>Card</option>
+              <option>UPI</option>
+              <option>Insurance</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Record payment</button>
+        </form>
+      </div>
+    </div>
+    {% else %}
+    <div class="panel">
+      <div class="panel-body">
+        <div class="empty-state"><h3>Invoice settled</h3><p>No balance remaining on this invoice.</p></div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

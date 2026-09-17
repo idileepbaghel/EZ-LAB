@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Meridian HMS{% endblock %}
+{% block crumb %}Overview{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="stat-grid">
+  <div class="stat-card accent-teal">
+    <div class="num">1,248</div>
+    <div class="label">Registered patients</div>
+  </div>
+  <div class="stat-card accent-blue">
+    <div class="num">24</div>
+    <div class="label">Appointments today</div>
+  </div>
+  <div class="stat-card accent-amber">
+    <div class="num">8</div>
+    <div class="label">Lab orders pending</div>
+  </div>
+  <div class="stat-card accent-red">
+    <div class="num">15</div>
+    <div class="label">Invoices unpaid</div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div>
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Today's appointments</h2>
+        <a class="btn btn-primary btn-sm" href="#">+ New appointment</a>
+      </div>
+      <div class="panel-body no-pad">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Patient</th>
+              <th>Doctor</th>
+              <th>Department</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="mono">09:00 AM</td>
+              <td><a href="#">John Doe</a></td>
+              <td>Dr. Smith</td>
+              <td>General Medicine</td>
+              <td><span class="pill pill-blue">Checked In</span></td>
+            </tr>
+            <tr>
+              <td class="mono">10:30 AM</td>
+              <td><a href="#">Jane Roe</a></td>
+              <td>Dr. Adams</td>
+              <td>Cardiology</td>
+              <td><span class="pill pill-amber">Scheduled</span></td>
+            </tr>
+            <tr>
+              <td class="mono">11:15 AM</td>
+              <td><a href="#">Mark Lee</a></td>
+              <td>Dr. Smith</td>
+              <td>General Medicine</td>
+              <td><span class="pill pill-green">Completed</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Pending lab orders</h2>
+        <a class="btn btn-secondary btn-sm" href="#">View all</a>
+      </div>
+      <div class="panel-body no-pad">
+        <table>
+          <thead>
+            <tr>
+              <th>Order #</th>
+              <th>Patient</th>
+              <th>Priority</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="mono"><a href="#">LAB00123</a></td>
+              <td>Sarah Connor</td>
+              <td><span class="pill pill-red">STAT</span></td>
+              <td><span class="pill pill-blue">Sample Pending</span></td>
+            </tr>
+            <tr>
+              <td class="mono"><a href="#">LAB00124</a></td>
+              <td>Kyle Reese</td>
+              <td><span class="pill pill-amber">Urgent</span></td>
+              <td><span class="pill pill-blue">In Progress</span></td>
+            </tr>
+            <tr>
+              <td class="mono"><a href="#">LAB00125</a></td>
+              <td>Alice Johnson</td>
+              <td><span class="pill pill-grey">Routine</span></td>
+              <td><span class="pill pill-blue">Sample Pending</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Recently registered</h2>
+        <a class="btn btn-primary btn-sm" href="#">+ New patient</a>
+      </div>
+      <div class="panel-body no-pad">
+        <table>
+          <thead>
+            <tr>
+              <th>MRN</th>
+              <th>Name</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="mono">MRN00042</td>
+              <td><a href="#">Alice Johnson</a></td>
+            </tr>
+            <tr>
+              <td class="mono">MRN00043</td>
+              <td><a href="#">Bob Williams</a></td>
+            </tr>
+            <tr>
+              <td class="mono">MRN00044</td>
+              <td><a href="#">Charlie Davis</a></td>
+            </tr>
+            <tr>
+              <td class="mono">MRN00045</td>
+              <td><a href="#">Diana Prince</a></td>
+            </tr>
+            <tr>
+              <td class="mono">MRN00046</td>
+              <td><a href="#">Evan Wright</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Quick actions</h2></div>
+      <div class="panel-body" style="display:flex; flex-direction:column; gap:10px;">
+        <a class="btn btn-secondary btn-block" href="#">Register a patient</a>
+        <a class="btn btn-secondary btn-block" href="#">Schedule an appointment</a>
+        <a class="btn btn-secondary btn-block" href="#">Create a lab order</a>
+        <a class="btn btn-secondary btn-block" href="#">Raise an invoice</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

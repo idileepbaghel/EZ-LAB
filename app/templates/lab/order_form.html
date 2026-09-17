@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}New lab order — Meridian HMS{% endblock %}
+{% block crumb %}Laboratory{% endblock %}
+{% block page_title %}Create lab order{% endblock %}
+
+{% block content %}
+<div class="panel" style="max-width:720px;">
+  <div class="panel-body">
+    <form method="POST">
+      <div class="field-row">
+        <div class="field">
+          <label for="patient_id">Patient</label>
+          <select id="patient_id" name="patient_id" required>
+            <option value="">Select a patient…</option>
+            {% for p in patients %}
+            <option value="{{ p.id }}" {{ 'selected' if preselect==p.id }}>{{ p.full_name }} — {{ p.mrn }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="ordered_by">Ordering physician</label>
+          <input type="text" id="ordered_by" name="ordered_by" placeholder="Dr. Name" required>
+        </div>
+        <div class="field">
+          <label for="priority">Priority</label>
+          <select id="priority" name="priority">
+            <option value="Routine">Routine</option>
+            <option value="Urgent">Urgent</option>
+            <option value="STAT">STAT</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-title">Select tests</div>
+      <div class="checklist" id="test-checklist">
+        {% for t in tests %}
+        <label>
+          <input type="checkbox" name="test_ids" value="{{ t.id }}" data-price="{{ t.price }}">
+          <span>{{ t.name }} <span class="mono" style="color:var(--ink-soft); font-size:12px;">{{ t.code }}</span></span>
+          <span class="meta">{{ t.category }} · {{ t.sample_type }} · ₹{{ '%.0f'|format(t.price) }}</span>
+        </label>
+        {% endfor %}
+      </div>
+
+      <div class="totals-box" style="margin-top:12px;">
+        <table>
+          <tr><td>Selected tests</td><td id="selected-count" style="text-align:right;">0</td></tr>
+          <tr class="grand"><td>Estimated cost</td><td id="selected-total" style="text-align:right;">₹0.00</td></tr>
+        </table>
+      </div>
+
+      <div class="actions-row">
+        <button type="submit" class="btn btn-primary">Create lab order</button>
+        <a class="btn btn-secondary" href="{{ url_for('main.lab_orders_list') }}">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

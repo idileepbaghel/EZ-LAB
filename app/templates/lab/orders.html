@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Lab orders — Meridian HMS{% endblock %}
+{% block crumb %}Laboratory{% endblock %}
+{% block page_title %}Lab orders{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+  <div class="filter-tabs">
+    <a class="filter-tab {{ 'active' if status=='' }}" href="{{ url_for('main.lab_orders_list') }}">All</a>
+    <a class="filter-tab {{ 'active' if status=='Sample Pending' }}" href="{{ url_for('main.lab_orders_list', status='Sample Pending') }}">Sample Pending</a>
+    <a class="filter-tab {{ 'active' if status=='In Progress' }}" href="{{ url_for('main.lab_orders_list', status='In Progress') }}">In Progress</a>
+    <a class="filter-tab {{ 'active' if status=='Completed' }}" href="{{ url_for('main.lab_orders_list', status='Completed') }}">Completed</a>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('main.lab_order_new') }}">+ New lab order</a>
+</div>
+
+<div class="panel">
+  <div class="panel-body no-pad">
+    <table>
+      <thead><tr><th>Order #</th><th>Patient</th><th>Tests</th><th>Ordered by</th><th>Priority</th><th>Placed</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for o in orders %}
+        <tr>
+          <td class="mono"><a href="{{ url_for('main.lab_order_view', order_id=o.id) }}">{{ o.order_no }}</a></td>
+          <td><a href="{{ url_for('main.patient_view', patient_id=o.patient.id) }}">{{ o.patient.full_name }}</a></td>
+          <td>{{ o.items|length }}</td>
+          <td>{{ o.ordered_by }}</td>
+          <td>
+            {% if o.priority == 'STAT' %}<span class="pill pill-red">{{ o.priority }}</span>
+            {% elif o.priority == 'Urgent' %}<span class="pill pill-amber">{{ o.priority }}</span>
+            {% else %}<span class="pill pill-grey">{{ o.priority }}</span>{% endif %}
+          </td>
+          <td>{{ o.created_at.strftime('%d %b, %H:%M') }}</td>
+          <td><span class="pill pill-{{ 'green' if o.status=='Completed' else 'blue' if o.status=='In Progress' else 'amber' }}">{{ o.status }}</span></td>
+        </tr>
+        {% else %}
+        <tr class="empty-row"><td colspan="7">No lab orders found. <a href="{{ url_for('main.lab_order_new') }}">Create one</a>.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+# Virtual Environment
+venv/
+env/
+ENV/
+myenv/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment Variables (Keep your local DB credentials safe!)
+.env
+.env.local
+
+# Flask Instance folder (Often contains local SQLite DBs or config)
+instance/
+
+# IDE / OS Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

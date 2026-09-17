@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{{ order.order_no }} — Meridian HMS{% endblock %}
+{% block crumb %}Laboratory / Lab orders{% endblock %}
+{% block page_title %}Order {{ order.order_no }}{% endblock %}
+
+{% block content %}
+<div class="panel">
+  <div class="panel-body">
+    <div class="detail-grid">
+      <div class="detail-item"><div class="k">Patient</div><div class="v"><a href="{{ url_for('main.patient_view', patient_id=order.patient.id) }}">{{ order.patient.full_name }}</a></div></div>
+      <div class="detail-item"><div class="k">Ordering physician</div><div class="v">{{ order.ordered_by }}</div></div>
+      <div class="detail-item"><div class="k">Priority</div><div class="v">{{ order.priority }}</div></div>
+      <div class="detail-item"><div class="k">Placed on</div><div class="v">{{ order.created_at.strftime('%d %b %Y, %H:%M') }}</div></div>
+      <div class="detail-item"><div class="k">Status</div><div class="v"><span class="pill pill-{{ 'green' if order.status=='Completed' else 'blue' if order.status=='In Progress' else 'amber' }}">{{ order.status }}</span></div></div>
+    </div>
+  </div>
+</div>
+
+{% for item in order.items %}
+<div class="panel">
+  <div class="panel-head">
+    <div>
+      <h3 style="margin-bottom:2px;">{{ item.test.name }} <span class="mono" style="font-weight:400; color:var(--ink-soft); font-size:12px;">{{ item.test.code }}</span></h3>
+      <p style="margin:0; font-size:12.5px;">{{ item.test.category }} · Sample: {{ item.test.sample_type }} · TAT {{ item.test.turnaround_hours }}h</p>
+    </div>
+    <span class="pill pill-{{ 'green' if item.status=='Resulted' else 'blue' if item.status=='Collected' else 'amber' }}">{{ item.status }}</span>
+  </div>
+  <div class="panel-body">
+    {% if item.status == 'Pending' %}
+      <form method="POST" action="{{ url_for('main.lab_item_update', order_id=order.id, item_id=item.id) }}">
+        <input type="hidden" name="action" value="collect">
+        <button type="submit" class="btn btn-secondary btn-sm">Mark sample collected</button>
+      </form>
+    {% elif item.status == 'Collected' %}
+      <form method="POST" action="{{ url_for('main.lab_item_update', order_id=order.id, item_id=item.id) }}">
+        <input type="hidden" name="action" value="result">
+        <div class="field-row">
+          <div class="field">
+            <label>Result value</label>
+            <input type="text" name="result_value" placeholder="e.g. 13.2 g/dL" required>
+          </div>
+          <div class="field">
+            <label>Flag</label>
+            <select name="result_flag">
+              <option>Normal</option>
+              <option>High</option>
+              <option>Low</option>
+              <option>Critical</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Notes (optional)</label>
+          <input type="text" name="result_notes" placeholder="Additional remarks for the report">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Save result</button>
+      </form>
+    {% else %}
+      <div class="detail-grid">
+        <div class="detail-item"><div class="k">Result</div><div class="v">{{ item.result_value }}</div></div>
+        <div class="detail-item"><div class="k">Flag</div><div class="v">
+          <span class="pill pill-{{ 'red' if item.result_flag=='Critical' else 'amber' if item.result_flag in ['High','Low'] else 'green' }}">{{ item.result_flag }}</span>
+        </div></div>
+        <div class="detail-item"><div class="k">Resulted at</div><div class="v">{{ item.resulted_at.strftime('%d %b %Y, %H:%M') }}</div></div>
+      </div>
+      {% if item.result_notes %}<p style="margin-top:10px;">{{ item.result_notes }}</p>{% endif %}
+    {% endif %}
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

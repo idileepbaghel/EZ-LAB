@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit patient' if patient else 'Register patient' }} — Meridian HMS{% endblock %}
+{% block crumb %}Registration{% endblock %}
+{% block page_title %}{{ 'Edit patient' if patient else 'Register new patient' }}{% endblock %}
+
+{% block content %}
+<div class="panel" style="max-width:720px;">
+  <div class="panel-body">
+    <form method="POST">
+      <div class="section-title">Identity</div>
+      <div class="field">
+        <label for="full_name">Full name</label>
+        <input type="text" id="full_name" name="full_name" value="{{ patient.full_name if patient else '' }}" required>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="dob">Date of birth</label>
+          <input type="date" id="dob" name="dob" value="{{ patient.dob.isoformat() if patient else '' }}" required>
+        </div>
+        <div class="field">
+          <label for="gender">Gender</label>
+          <select id="gender" name="gender" required>
+            {% for g in ['Female', 'Male', 'Other'] %}
+            <option value="{{ g }}" {{ 'selected' if patient and patient.gender==g }}>{{ g }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="blood_group">Blood group</label>
+          <select id="blood_group" name="blood_group">
+            <option value="">Unknown</option>
+            {% for bg in ['A+','A-','B+','B-','O+','O-','AB+','AB-'] %}
+            <option value="{{ bg }}" {{ 'selected' if patient and patient.blood_group==bg }}>{{ bg }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="section-title">Contact</div>
+      <div class="field-row">
+        <div class="field">
+          <label for="phone">Phone number</label>
+          <input type="tel" id="phone" name="phone" value="{{ patient.phone if patient else '' }}" required>
+        </div>
+        <div class="field">
+          <label for="email">Email (optional)</label>
+          <input type="email" id="email" name="email" value="{{ patient.email if patient else '' }}">
+        </div>
+      </div>
+      <div class="field">
+        <label for="address">Address</label>
+        <textarea id="address" name="address" rows="2">{{ patient.address if patient else '' }}</textarea>
+      </div>
+
+      <div class="actions-row">
+        <button type="submit" class="btn btn-primary">{{ 'Save changes' if patient else 'Register patient' }}</button>
+        <a class="btn btn-secondary" href="{{ url_for('main.patient_view', patient_id=patient.id) if patient else url_for('main.patients_list') }}">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

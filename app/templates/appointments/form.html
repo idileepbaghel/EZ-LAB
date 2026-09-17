@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Schedule appointment — Meridian HMS{% endblock %}
+{% block crumb %}Registration / Appointments{% endblock %}
+{% block page_title %}Schedule appointment{% endblock %}
+
+{% block content %}
+<div class="panel" style="max-width:640px;">
+  <div class="panel-body">
+    <form method="POST">
+      <div class="field">
+        <label for="patient_id">Patient</label>
+        <select id="patient_id" name="patient_id" required>
+          <option value="">Select a patient…</option>
+          {% for p in patients %}
+          <option value="{{ p.id }}" {{ 'selected' if preselect==p.id }}>{{ p.full_name }} — {{ p.mrn }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="department">Department</label>
+          <select id="department" name="department" required>
+            {% for d in ['General Medicine','Pediatrics','Orthopedics','Gynecology','Cardiology','Dermatology','ENT'] %}
+            <option value="{{ d }}">{{ d }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="doctor">Doctor</label>
+          <input type="text" id="doctor" name="doctor" placeholder="Dr. Name" required>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="appt_date">Date</label>
+          <input type="date" id="appt_date" name="appt_date" required>
+        </div>
+        <div class="field">
+          <label for="appt_time">Time</label>
+          <input type="time" id="appt_time" name="appt_time" required>
+        </div>
+      </div>
+      <div class="field">
+        <label for="notes">Notes (optional)</label>
+        <textarea id="notes" name="notes" rows="2" placeholder="Reason for visit, special instructions…"></textarea>
+      </div>
+      <div class="actions-row">
+        <button type="submit" class="btn btn-primary">Schedule appointment</button>
+        <a class="btn btn-secondary" href="{{ url_for('main.appointments_list') }}">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

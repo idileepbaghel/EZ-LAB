@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign in — Meridian HMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="auth-screen">
+  <div class="auth-brand">
+    <div class="mark">Meridian<span class="dot">HMS</span></div>
+    <div>
+      <h1>Registration, lab and billing, in one workflow.</h1>
+      <p style="color:#c3ddd4; max-width:400px; margin-top:14px;">
+        Built for front desk, laboratory and billing teams who need patient records, test orders and invoices to stay in sync.
+      </p>
+    </div>
+    <div class="foot">Meridian HMS · Internal staff portal</div>
+  </div>
+
+  <div class="auth-panel">
+    <div class="auth-card">
+      <h2>Sign in</h2>
+      <div class="sub">Enter your staff credentials to continue.</div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST">
+        <div class="field">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" autocomplete="username" required autofocus>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+      </form>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>

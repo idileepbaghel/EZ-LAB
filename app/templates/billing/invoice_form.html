@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}New invoice — Meridian HMS{% endblock %}
+{% block crumb %}Billing{% endblock %}
+{% block page_title %}Create invoice{% endblock %}
+
+{% block content %}
+<div class="panel" style="max-width:760px;">
+  <div class="panel-body">
+    <form method="POST">
+      <div class="field">
+        <label for="patient_id">Patient</label>
+        <select id="patient_id" name="patient_id" required>
+          <option value="">Select a patient…</option>
+          {% for p in patients %}
+          <option value="{{ p.id }}" {{ 'selected' if preselect==p.id }}>{{ p.full_name }} — {{ p.mrn }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="section-title">Line items</div>
+      <div class="line-items" id="line-items">
+        <div class="line-item-row head">
+          <span>Description</span><span>Qty</span><span>Unit price</span><span></span>
+        </div>
+        <div class="line-item-row">
+          <input type="text" name="description" placeholder="e.g. Consultation fee" required>
+          <input type="number" name="qty" value="1" min="1" required>
+          <input type="number" name="unit_price" placeholder="0.00" step="0.01" min="0" required>
+          <button type="button" class="remove-row" title="Remove">&times;</button>
+        </div>
+      </div>
+      <button type="button" id="add-line-item" class="btn btn-secondary btn-sm">+ Add line item</button>
+
+      <div class="totals-box" style="margin-top:18px;">
+        <table>
+          <tr class="grand"><td>Total</td><td id="invoice-total" style="text-align:right;">₹0.00</td></tr>
+        </table>
+      </div>
+
+      <div class="actions-row" style="margin-top:8px;">
+        <button type="submit" class="btn btn-primary">Create invoice</button>
+        <a class="btn btn-secondary" href="{{ url_for('main.invoices_list') }}">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Patients — Meridian HMS{% endblock %}
+{% block crumb %}Registration{% endblock %}
+{% block page_title %}Patients{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+  <form class="search-box" method="GET">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+    <input type="text" name="q" value="{{ q }}" placeholder="Search by name, MRN or phone">
+  </form>
+  <a class="btn btn-primary" href="{{ url_for('main.patient_new') }}">+ Register patient</a>
+</div>
+
+<div class="panel">
+  <div class="panel-body no-pad">
+    <table>
+      <thead>
+        <tr><th>MRN</th><th>Name</th><th>Age / Gender</th><th>Phone</th><th>Registered</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for p in patients %}
+        <tr>
+          <td class="mono">{{ p.mrn }}</td>
+          <td><a href="{{ url_for('main.patient_view', patient_id=p.id) }}">{{ p.full_name }}</a></td>
+          <td>{{ p.age() }} yrs · {{ p.gender }}</td>
+          <td class="mono">{{ p.phone }}</td>
+          <td>{{ p.created_at.strftime('%d %b %Y') }}</td>
+          <td><a class="btn btn-secondary btn-sm" href="{{ url_for('main.patient_view', patient_id=p.id) }}">Open</a></td>
+        </tr>
+        {% else %}
+        <tr class="empty-row"><td colspan="6">
+          {% if q %}No patients match "{{ q }}".{% else %}No patients registered yet. <a href="{{ url_for('main.patient_new') }}">Register the first one</a>.{% endif %}
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

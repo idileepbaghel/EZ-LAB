@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Appointments — Meridian HMS{% endblock %}
+{% block crumb %}Registration{% endblock %}
+{% block page_title %}Appointments{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+  <form method="GET" class="field-row" style="align-items:flex-end;">
+    <div class="field" style="margin-bottom:0;">
+      <label for="date">Date</label>
+      <input type="date" id="date" name="date" value="{{ filter_date }}" onchange="this.form.submit()">
+    </div>
+  </form>
+  <a class="btn btn-primary" href="{{ url_for('main.appointment_new') }}">+ New appointment</a>
+</div>
+
+<div class="panel">
+  <div class="panel-body no-pad">
+    <table>
+      <thead>
+        <tr><th>Time</th><th>Patient</th><th>Doctor</th><th>Department</th><th>Notes</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        {% for a in appointments %}
+        <tr>
+          <td class="mono">{{ a.appt_time }}</td>
+          <td><a href="{{ url_for('main.patient_view', patient_id=a.patient.id) }}">{{ a.patient.full_name }}</a></td>
+          <td>{{ a.doctor }}</td>
+          <td>{{ a.department }}</td>
+          <td>{{ a.notes or '—' }}</td>
+          <td>
+            <span class="pill status-pill pill-{{ 'green' if a.status=='Completed' else 'red' if a.status=='Cancelled' else 'blue' if a.status=='Checked In' else 'amber' }}">{{ a.status }}</span>
+            <select class="status-select" data-appt-id="{{ a.id }}" style="margin-left:8px; padding:3px 6px; border-radius:4px; border:1px solid var(--line);">
+              {% for s in ['Scheduled','Checked In','Completed','Cancelled'] %}
+              <option value="{{ s }}" {{ 'selected' if a.status==s }}>{{ s }}</option>
+              {% endfor %}
+            </select>
+          </td>
+        </tr>
+        {% else %}
+        <tr class="empty-row"><td colspan="6">No appointments on this date. <a href="{{ url_for('main.appointment_new') }}">Schedule one</a>.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
