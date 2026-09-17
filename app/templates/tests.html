@@ -1,0 +1,452 @@
+{% extends "base.html" %}
+{% block title %}Tests — Meridian HMS{% endblock %}
+{% block crumb %}Master{% endblock %}
+{% block page_title %}Tests{% endblock %}
+
+{% block content %}
+
+<div id="testListingSection">
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Test list</h2>
+
+      <button
+        class="btn btn-primary btn-sm"
+        type="button"
+        onclick="showAddTestSection()"
+      >
+        + New test
+      </button>
+    </div>
+
+    <div class="panel-body no-pad">
+      <div
+        class="toolbar"
+        style="padding:16px 20px; margin-bottom:16px; justify-content:flex-start; gap:12px;"
+      >
+        <div class="search-box">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="11" cy="11" r="7"/>
+            <path d="M20 20L16.65 16.65"/>
+          </svg>
+
+          <input
+            id="testSearch"
+            type="text"
+            placeholder="Search tests"
+            aria-label="Search tests"
+          >
+        </div>
+
+        <div style="min-width:160px;">
+          <select
+            id="testStatusFilter"
+            aria-label="Filter by status"
+            style="width:100%; padding:9px 11px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--surface); color:var(--ink);"
+          >
+            <option value="all">All statuses</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Test Name</th>
+            <th>Code</th>
+            <th>Price</th>
+            <th>Department</th>
+            <th>Sample</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+
+        <tbody id="testTableBody">
+          {% for test in tests %}
+          <tr
+            data-status="{{ test.status }}"
+            data-search="{{ test.test_name }} {{ test.test_code }} {{ test.department_name or '' }} {{ test.sample_type or '' }}"
+            {% if test.status == 'Inactive' %}
+            style="background:rgba(75, 79, 83, 0.17);"
+            {% endif %}
+          >
+            <td class="mono">{{ test.id }}</td>
+
+            <td>{{ test.test_name }}</td>
+
+            <td class="mono">{{ test.test_code }}</td>
+
+            <td>{{ test.price }}</td>
+
+            <td>{{ test.department_name or '—' }}</td>
+
+            <td>{{ test.sample_type or '—' }}</td>
+
+            <td>
+              {% if test.status == 'Active' %}
+               <span
+                style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600; line-height:1; background:rgba(25,135,84,0.12); color:#198754;"
+              >
+                Active
+              </span>
+              {% else %}
+              <span
+                style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600; line-height:1; background:rgba(220,53,69,0.12); color:#dc3545;"
+              >
+                Inactive
+              </span>
+              {% endif %}
+            </td>
+
+            <td>
+              <div class="actions-row">
+
+                <button
+                  class="btn btn-info btn-sm"
+                  type="button"
+                  data-id="{{ test.id }}"
+                  data-name="{{ test.test_name }}"
+                  data-code="{{ test.test_code }}"
+                  data-price="{{ test.price }}"
+                  data-department="{{ test.department_id or '' }}"
+                  data-sample="{{ test.sample_id or '' }}"
+                  data-status="{{ test.status }}"
+                  onclick="editTest(this)"
+                >
+                  Edit
+                </button>
+
+                <button
+                  class="btn btn-danger btn-sm"
+                  type="button"
+                  onclick="deleteTest('{{ test.id }}', '{{ test.test_name|e }}')"
+                >
+                  Delete
+                </button>
+
+              </div>
+            </td>
+          </tr>
+
+          {% else %}
+          <tr class="empty-row">
+            <td colspan="8">No tests found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+<div id="testFormSection" style="display:none;">
+  <div class="panel">
+
+    <div class="panel-head">
+      <div>
+        <h2 id="testFormTitle">Add a New Test</h2>
+        <p style="margin:3px 0 0; font-size:12.5px;">
+          Add test details and assign the test to a department and sample type.
+        </p>
+      </div>
+
+      <button
+        class="btn btn-secondary btn-sm"
+        type="button"
+        onclick="showTestListing()"
+      >
+        Back to tests
+      </button>
+    </div>
+
+    <div class="panel-body">
+
+      <form
+        id="testForm"
+        method="POST"
+        action="{{ url_for('master.tests') }}"
+      >
+
+        <input
+          type="hidden"
+          id="testAction"
+          name="action"
+          value="create"
+        >
+
+        <input
+          type="hidden"
+          id="testId"
+          name="test_id"
+        >
+
+        <div class="field-row">
+
+          <div class="field">
+            <label for="test-name">Test Name</label>
+
+            <input
+              id="test-name"
+              type="text"
+              name="test_name"
+              placeholder="e.g. Complete Blood Count"
+              maxlength="150"
+              required
+            >
+          </div>
+
+          <div class="field">
+            <label for="test-code">Test Code</label>
+
+            <input
+              id="test-code"
+              type="text"
+              name="test_code"
+              placeholder="e.g. CBC"
+              maxlength="50"
+              required
+            >
+          </div>
+
+        </div>
+
+        <div class="field-row">
+
+          <div class="field">
+            <label for="test-price">Price</label>
+
+            <input
+              id="test-price"
+              type="number"
+              name="price"
+              placeholder="e.g. 500"
+              min="0"
+              step="0.01"
+              required
+            >
+          </div>
+
+          <div class="field">
+            <label for="test-department">Department</label>
+
+            <select
+              id="test-department"
+              name="department_id"
+              required
+            >
+              <option value="" selected disabled>
+                Select department
+              </option>
+
+              {% for department in departments %}
+              <option value="{{ department.id }}">
+                {{ department.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+        </div>
+
+        <div class="field-row">
+
+          <div class="field">
+            <label for="test-status">Status</label>
+
+            <select
+              id="test-status"
+              name="status"
+              required
+            >
+              <option value="Active" selected>Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="test-sample">Sample</label>
+
+            <select
+              id="test-sample"
+              name="sample_id"
+              required
+            >
+              <option value="" selected disabled>
+                Select sample
+              </option>
+
+              {% for sample in samples %}
+              <option value="{{ sample.id }}">
+                {{ sample.sample_type }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+        </div>
+
+        <div
+          class="actions-row"
+          style="justify-content:flex-end; margin-top:24px; padding-top:16px; border-top:1px solid var(--line);"
+        >
+
+          <button
+            class="btn btn-secondary"
+            type="button"
+            onclick="showTestListing()"
+          >
+            Cancel
+          </button>
+
+          <button
+            class="btn btn-primary"
+            type="submit"
+            id="testSubmitButton"
+          >
+            Save test
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+  function showAddTestSection() {
+    document.getElementById('testListingSection').style.display = 'none';
+    document.getElementById('testFormSection').style.display = 'block';
+
+    document.getElementById('testForm').reset();
+    document.getElementById('testFormTitle').textContent = 'Add a New Test';
+    document.getElementById('testAction').value = 'create';
+    document.getElementById('testId').value = '';
+    document.getElementById('testStatus').value = 'Active';
+    document.getElementById('testSubmitButton').textContent = 'Save test';
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+
+    document.getElementById('test-name').focus();
+  }
+
+  function showTestListing() {
+    document.getElementById('testFormSection').style.display = 'none';
+    document.getElementById('testListingSection').style.display = 'block';
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }
+
+  function editTest(button) {
+    document.getElementById('testListingSection').style.display = 'none';
+    document.getElementById('testFormSection').style.display = 'block';
+
+    document.getElementById('testFormTitle').textContent = 'Edit Test';
+    document.getElementById('testAction').value = 'edit';
+    document.getElementById('testId').value = button.dataset.id || '';
+
+    document.getElementById('test-name').value = button.dataset.name || '';
+    document.getElementById('test-code').value = button.dataset.code || '';
+    document.getElementById('test-price').value = button.dataset.price || '';
+    document.getElementById('test-department').value = button.dataset.department || '';
+    document.getElementById('test-sample').value = button.dataset.sample || '';
+    document.getElementById('test-status').value = button.dataset.status || 'Active';
+
+    document.getElementById('testSubmitButton').textContent = 'Save changes';
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+
+    document.getElementById('test-name').focus();
+  }
+
+  function deleteTest(testId, testName) {
+    Swal.fire({
+      title: 'Delete test?',
+      text: `Are you sure you want to delete "${testName}"?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete',
+      cancelButtonText: 'Cancel',
+      cancelButtonColor: '#6c757d',
+      confirmButtonColor: 'red',
+      reverseButtons: true
+    }).then(function(result) {
+      if (result.isConfirmed) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = "{{ url_for('master.tests') }}";
+
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = 'delete';
+
+        const idInput = document.createElement('input');
+        idInput.type = 'hidden';
+        idInput.name = 'test_id';
+        idInput.value = testId;
+
+        form.appendChild(actionInput);
+        form.appendChild(idInput);
+
+        document.body.appendChild(form);
+        form.submit();
+      }
+    });
+  }
+
+  const testSearch = document.getElementById('testSearch');
+  const testStatusFilter = document.getElementById('testStatusFilter');
+  const testRows = document.querySelectorAll('#testTableBody tr[data-status]');
+
+  function filterTests() {
+    const searchValue = testSearch.value.trim().toLowerCase();
+    const selectedStatus = testStatusFilter.value;
+
+    testRows.forEach(function(row) {
+      const searchText = row.dataset.search.toLowerCase();
+      const rowStatus = row.dataset.status;
+
+      const matchesSearch = searchText.includes(searchValue);
+      const matchesStatus = selectedStatus === 'all' || rowStatus === selectedStatus;
+
+      row.style.display = matchesSearch && matchesStatus ? '' : 'none';
+    });
+  }
+
+  testSearch.addEventListener('input', filterTests);
+  testStatusFilter.addEventListener('change', filterTests);
+
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+      showTestListing();
+    }
+  });
+</script>
+
+{% endblock %}

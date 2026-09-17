@@ -600,4 +600,363 @@ def samples():
         conn.close()
 
 
-    
+@master_bp.route('/tests', methods=['GET', 'POST'])
+def tests():
+    conn = None
+    cur = None
+
+    if request.method == 'POST':
+        try:
+            action = request.form.get('action', 'create').strip()
+
+            conn = get_db_connection()
+            cur = conn.cursor()
+
+            if action == 'create':
+                test_name = request.form.get('test_name', '').strip()
+                test_code = request.form.get('test_code', '').strip()
+                price = request.form.get('price', '').strip()
+                department_id = request.form.get('department_id', '').strip()
+                sample_id = request.form.get('sample_id', '').strip()
+                status = request.form.get('status', 'Active').strip()
+
+                if not test_name or not test_code or not price or not department_id or not sample_id:
+                    flash('All test details are required.', 'error')
+                    return redirect(url_for('master.tests'))
+
+                if status not in ['Active', 'Inactive']:
+                    flash('Invalid test status.', 'error')
+                    return redirect(url_for('master.tests'))
+
+                try:
+                    department_id = int(department_id)
+                    sample_id = int(sample_id)
+                except ValueError:
+                    flash('Invalid department or sample.', 'error')
+                    return redirect(url_for('master.tests'))
+
+                try:
+                    price = float(price)
+                except ValueError:
+                    flash('Price must be a valid number.', 'error')
+                    return redirect(url_for('master.tests'))
+
+                if price < 0:
+                    flash('Price cannot be negative.', 'error')
+                    return redirect(url_for('master.tests'))
+
+                cur.execute("""
+                    SELECT id
+                    FROM departments
+                    WHERE id = %s
+                    LIMIT 1
+                """, (department_id,))
+
+                department = cur.fetchone()
+
+                if not department:
+                    flash('Department not found.', 'error')
+                    return redirect(url_for('master.tests'))
+
+                cur.execute("""
+                    SELECT id, sample_type
+                    FROM ezlab_sample_types
+                    WHERE id = %s
+                    LIMIT 1
+                """, (sample_id,))
+
+                sample = cur.fetchone()
+
+                if not sample:
+                    flash('Sample not found.', 'error')
+                    return redirect(url_for('master.tests'))
+
+                cur.execute("""
+                    SELECT id
+                    FROM ezlab_tests
+                    WHERE test_code = %s
+                    LIMIT 1
+                """, (test_code,))
+
+                existing_test = cur.fetchone()
+
+                if existing_test:
+                    flash('Test code already exists.', 'error')
+                    return redirect(url_for('master.tests'))
+
+                cur.execute("""
+                    INSERT INTO ezlab_tests
+                        (
+                            department_id,
+                            test_name,
+                            test_code,
+                            sample_type,
+                            price,
+                            status,
+                            added_by
+                        )
+                    VALUES
+                        (%s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    department_id,
+                    test_name,
+                    test_code,
+                    sample['sample_type'],
+                    price,
+                    status,
+                    session.get('name')
+                ))
+
+                conn.commit()
+
+                flash('Test added successfully.', 'success')
+                return redirect(url_for('master.tests'))
+
+            if action == 'edit':
+                test_id = request.form.get('test_id', '').strip()
+                test_name = request.form.get('test_name', '').strip()
+                test_code = request.form.get('test_code', '').strip()
+                price = request.form.get('price', '').strip()
+                department_id = request.form.get('department_id', '').strip()
+                sample_id = request.form.get('sample_id', '').strip()
+                status = request.form.get('status', 'Active').strip()
+
+                if not test_id:
+                    flash('Invalid test.', 'error')
+                    return redirect(url_for('master.tests'))
+
+                try:
+                    test_id = int(test_id)
+                except ValueError:
+                    flash('Invalid test.', 'error')
+                    return redirect(url_for('master.tests'))
+
+                if not test_name or not test_code or not price or not department_id or not sample_id:
+                    flash('All test details are required.', 'error')
+                    return redirect(url_for('master.tests'))
+
+                if status not in ['Active', 'Inactive']:
+                    flash('Invalid test status.', 'error')
+                    return redirect(url_for('master.tests'))
+
+                try:
+                    department_id = int(department_id)
+                    sample_id = int(sample_id)
+                except ValueError:
+                    flash('Invalid department or sample.', 'error')
+                    return redirect(url_for('master.tests'))
+
+                try:
+                    price = float(price)
+                except ValueError:
+                    flash('Price must be a valid number.', 'error')
+                    return redirect(url_for('master.tests'))
+
+                if price < 0:
+                    flash('Price cannot be negative.', 'error')
+                    return redirect(url_for('master.tests'))
+
+                cur.execute("""
+                    SELECT id
+                    FROM ezlab_tests
+                    WHERE id = %s
+                    LIMIT 1
+                """, (test_id,))
+
+                existing_test = cur.fetchone()
+
+                if not existing_test:
+                    flash('Test not found.', 'error')
+                    return redirect(url_for('master.tests'))
+
+                cur.execute("""
+                    SELECT id
+                    FROM ezlab_tests
+                    WHERE test_code = %s
+                      AND id != %s
+                    LIMIT 1
+                """, (
+                    test_code,
+                    test_id
+                ))
+
+                duplicate_test = cur.fetchone()
+
+                if duplicate_test:
+                    flash('Test code already exists.', 'error')
+                    return redirect(url_for('master.tests'))
+
+                cur.execute("""
+                    SELECT id
+                    FROM departments
+                    WHERE id = %s
+                    LIMIT 1
+                """, (department_id,))
+
+                department = cur.fetchone()
+
+                if not department:
+                    flash('Department not found.', 'error')
+                    return redirect(url_for('master.tests'))
+
+                cur.execute("""
+                    SELECT id, sample_type
+                    FROM ezlab_sample_types
+                    WHERE id = %s
+                    LIMIT 1
+                """, (sample_id,))
+
+                sample = cur.fetchone()
+
+                if not sample:
+                    flash('Sample not found.', 'error')
+                    return redirect(url_for('master.tests'))
+
+                cur.execute("""
+                    UPDATE ezlab_tests
+                    SET
+                        department_id = %s,
+                        test_name = %s,
+                        test_code = %s,
+                        sample_type = %s,
+                        price = %s,
+                        status = %s,
+                        updated_by = %s
+                    WHERE id = %s
+                """, (
+                    department_id,
+                    test_name,
+                    test_code,
+                    sample['sample_type'],
+                    price,
+                    status,
+                    session.get('name'),
+                    test_id
+                ))
+
+                conn.commit()
+
+                flash('Test updated successfully.', 'success')
+                return redirect(url_for('master.tests'))
+
+            if action == 'delete':
+                test_id = request.form.get('test_id', '').strip()
+
+                if not test_id:
+                    flash('Invalid test.', 'error')
+                    return redirect(url_for('master.tests'))
+
+                try:
+                    test_id = int(test_id)
+                except ValueError:
+                    flash('Invalid test.', 'error')
+                    return redirect(url_for('master.tests'))
+
+                cur.execute("""
+                    SELECT id
+                    FROM ezlab_tests
+                    WHERE id = %s
+                    LIMIT 1
+                """, (test_id,))
+
+                existing_test = cur.fetchone()
+
+                if not existing_test:
+                    flash('Test not found.', 'error')
+                    return redirect(url_for('master.tests'))
+
+                cur.execute("""
+                    DELETE FROM ezlab_tests
+                    WHERE id = %s
+                """, (test_id,))
+
+                conn.commit()
+
+                flash('Test deleted successfully.', 'success')
+                return redirect(url_for('master.tests'))
+
+            flash('Invalid action.', 'error')
+            return redirect(url_for('master.tests'))
+
+        except Exception as e:
+            if conn:
+                conn.rollback()
+
+            print('\nException occurred while saving test:', e)
+            flash('Unable to save test.', 'error')
+            return redirect(url_for('master.tests'))
+
+        finally:
+            if cur:
+                cur.close()
+            if conn:
+                conn.close()
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT
+                t.id,
+                t.department_id,
+                t.test_name,
+                t.test_code,
+                t.sample_type,
+                t.price,
+                t.status,
+                d.name AS department_name,
+                s.id AS sample_id
+            FROM ezlab_tests t
+            LEFT JOIN departments d
+                ON d.id = t.department_id
+            LEFT JOIN ezlab_sample_types s
+                ON s.sample_type = t.sample_type
+            ORDER BY t.test_name
+        """)
+
+        tests = cur.fetchall()
+
+        cur.execute("""
+            SELECT
+                id,
+                name
+            FROM departments
+            ORDER BY name
+        """)
+
+        departments = cur.fetchall()
+
+        cur.execute("""
+            SELECT
+                id,
+                sample_type
+            FROM ezlab_sample_types
+            ORDER BY sample_type
+        """)
+
+        samples = cur.fetchall()
+
+        return render_template(
+            'tests.html',
+            tests=tests,
+            departments=departments,
+            samples=samples
+        )
+
+    except Exception as e:
+        print('\nException at tests:', e)
+        flash('Unable to load tests.', 'error')
+
+        return render_template(
+            'tests.html',
+            tests=[],
+            departments=[],
+            samples=[]
+        )
+
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
