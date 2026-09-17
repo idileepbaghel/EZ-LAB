@@ -1,0 +1,524 @@
+{% extends "base.html" %}
+{% block title %}Departments — Meridian HMS{% endblock %}
+{% block crumb %}Master{% endblock %}
+{% block page_title %}Departments{% endblock %}
+{% block content %}
+
+<div class="panel">
+
+    <!-- Panel Header -->
+    <div class="panel-head">
+        <h2>Department list</h2>
+
+        <button class="btn btn-primary btn-sm" type="button" onclick="openNewDepartmentModal()">
+            + New department
+        </button>
+    </div>
+
+    <div class="panel-body no-pad">
+
+        <!-- Search / Filter Toolbar -->
+        <div class="toolbar" style="padding: 16px 20px; margin-bottom: 16px;">
+
+            <!-- Search -->
+            <div class="search-box">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="M20 20L16.65 16.65" />
+                </svg>
+
+                <input id="departmentSearch" type="text" placeholder="Search departments"
+                    aria-label="Search departments">
+            </div>
+
+            <!-- Status Filter -->
+            <div style="min-width: 180px;">
+                <select id="statusFilter" aria-label="Filter by status" style="
+            width: 100%;
+            padding: 9px 11px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius-sm);
+            background: var(--surface);
+            color: var(--ink);
+          ">
+
+                    <option value="all">All statuses</option>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
+            </div>
+
+        </div>
+
+        <!-- Department Table -->
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Code</th>
+                    <th>Sort Order</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody id="departmentTableBody">
+
+                {% for dept in departments %}
+
+                <tr data-status="{{ dept.status }}" data-search="{{ dept.name }} {{ dept.code }}">
+
+                    <td class="mono">
+                        {{ dept.id }}
+                    </td>
+
+                    <td>
+                        {{ dept.name }}
+                    </td>
+
+                    <td class="mono">
+                        {{ dept.code or '—' }}
+                    </td>
+
+                    <td>
+                        {{ dept.sort_order }}
+                    </td>
+
+                    <td>
+                        {{ dept.status or 'Unknown' }}
+                    </td>
+
+                    <td>
+                        <div class="actions-row">
+
+                            <button class="btn btn-info btn-sm" type="button" data-id="{{ dept.id }}"
+                                data-name="{{ dept.name }}" data-code="{{ dept.code or '' }}"
+                                data-sort-order="{{ dept.sort_order }}" data-status="{{ dept.status }}"
+                                onclick="openEditModal(this)">
+                                Edit
+                            </button>
+
+                        </div>
+                    </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr class="empty-row">
+                    <td colspan="6">
+                        No departments found.
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+        </table>
+
+    </div>
+</div>
+
+
+<!-- ============================================================
+     NEW DEPARTMENT MODAL
+     ============================================================ -->
+
+<div id="newDepartmentModal" style="
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(16, 24, 20, 0.48);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  ">
+
+    <div style="
+      width: min(600px, 100%);
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      box-shadow: 0 16px 40px rgba(22, 36, 31, 0.20);
+    ">
+
+        <!-- Modal Header -->
+        <div class="panel-head" style="padding: 18px 22px;">
+
+            <div>
+                <h2>New department</h2>
+                <p style="margin: 3px 0 0; font-size: 12.5px;">
+                    Add a new department to the hospital.
+                </p>
+            </div>
+
+            <button class="btn btn-secondary btn-sm" type="button" onclick="closeNewDepartmentModal()">
+                Close
+            </button>
+
+        </div>
+
+
+        <!-- Modal Form -->
+        <form method="POST" action="{{ url_for('master.departments') }}" style="padding: 22px;">
+
+            <!-- Department Name -->
+            <div class="field">
+
+                <label for="department-name">
+                    Department Name
+                </label>
+
+                <input id="department-name" type="text" name="name" placeholder="e.g. Cardiology" maxlength="100"
+                    required>
+
+            </div>
+
+
+            <!-- Code + Sort Order -->
+            <div class="field-row">
+
+                <div class="field">
+
+                    <label for="department-code">
+                        Department Code
+                    </label>
+
+                    <input id="department-code" type="text" name="code" placeholder="e.g. CARD" maxlength="50">
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="department-sort-order">
+                        Sort Order
+                    </label>
+
+                    <input id="department-sort-order" type="number" name="sort_order" value="0" min="0" placeholder="0"
+                        required>
+
+                </div>
+
+            </div>
+
+
+            <!-- Status -->
+            <div class="field">
+
+                <label for="department-status">
+                    Status
+                </label>
+
+                <select id="department-status" name="status" required>
+
+                    <option value="Active" selected>
+                        Active
+                    </option>
+
+                    <option value="Inactive">
+                        Inactive
+                    </option>
+
+                    <option value="Monitoring">
+                        Monitoring
+                    </option>
+
+                    <option value="Critical">
+                        Critical
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- Modal Actions -->
+            <div class="actions-row" style="
+          justify-content: flex-end;
+          margin-top: 24px;
+          padding-top: 16px;
+          border-top: 1px solid var(--line);
+        ">
+
+                <button class="btn btn-secondary" type="button" onclick="closeNewDepartmentModal()">
+                    Cancel
+                </button>
+
+                <button class="btn btn-primary" type="submit">
+                    Save department
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+
+<!-- ============================================================
+     EDIT DEPARTMENT MODAL
+     ============================================================ -->
+
+<div id="editDepartmentModal" style="
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(16, 24, 20, 0.48);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  ">
+
+    <div style="
+      width: min(600px, 100%);
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      box-shadow: 0 16px 40px rgba(22, 36, 31, 0.20);
+    ">
+
+        <div class="panel-head" style="padding: 18px 22px;">
+
+            <h2>Edit department</h2>
+
+            <button class="btn btn-secondary btn-sm" type="button" onclick="closeEditModal()">
+                Close
+            </button>
+
+        </div>
+
+
+        <form style="padding: 22px;">
+
+            <div class="field">
+
+                <label for="edit-dept-name">
+                    Department Name
+                </label>
+
+                <input id="edit-dept-name" type="text" name="name" maxlength="100">
+
+            </div>
+
+
+            <div class="field-row">
+
+                <div class="field">
+
+                    <label for="edit-dept-code">
+                        Department Code
+                    </label>
+
+                    <input id="edit-dept-code" type="text" name="code" maxlength="50">
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="edit-dept-sort">
+                        Sort Order
+                    </label>
+
+                    <input id="edit-dept-sort" type="number" name="sort_order" min="0">
+
+                </div>
+
+            </div>
+
+
+            <div class="field">
+
+                <label for="edit-dept-status">
+                    Status
+                </label>
+
+                <select id="edit-dept-status" name="status">
+
+                    <option value="Active">
+                        Active
+                    </option>
+
+                    <option value="Inactive">
+                        Inactive
+                    </option>
+
+                    <option value="Monitoring">
+                        Monitoring
+                    </option>
+
+                    <option value="Critical">
+                        Critical
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="actions-row" style="
+          justify-content: flex-end;
+          margin-top: 24px;
+          padding-top: 16px;
+          border-top: 1px solid var(--line);
+        ">
+
+                <button class="btn btn-secondary" type="button" onclick="closeEditModal()">
+                    Cancel
+                </button>
+
+                <button class="btn btn-primary" type="submit">
+                    Save changes
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+
+<script>
+
+    /* ============================================================
+       NEW DEPARTMENT MODAL
+       ============================================================ */
+
+    function openNewDepartmentModal() {
+        const modal = document.getElementById('newDepartmentModal');
+
+        modal.style.display = 'flex';
+
+        document.getElementById('department-name').focus();
+    }
+
+
+    function closeNewDepartmentModal() {
+        document.getElementById('newDepartmentModal').style.display = 'none';
+    }
+    /* ============================================================
+       EDIT DEPARTMENT MODAL
+       ============================================================ */
+    function openEditModal(button) {
+
+        const modal = document.getElementById('editDepartmentModal');
+
+        document.getElementById('edit-dept-name').value =
+            button.dataset.name || '';
+
+        document.getElementById('edit-dept-code').value =
+            button.dataset.code || '';
+
+        document.getElementById('edit-dept-sort').value =
+            button.dataset.sortOrder || '';
+
+        document.getElementById('edit-dept-status').value =
+            button.dataset.status || 'Active';
+
+        modal.style.display = 'flex';
+    }
+
+    function closeEditModal() {
+        document.getElementById('editDepartmentModal').style.display = 'none';
+    }
+
+    /* ============================================================
+       SEARCH
+       ============================================================ */
+
+    const departmentSearch =
+        document.getElementById('departmentSearch');
+
+    const statusFilter =
+        document.getElementById('statusFilter');
+
+    const departmentRows =
+        document.querySelectorAll('#departmentTableBody tr[data-status]');
+
+    function filterDepartments() {
+
+        const searchValue =
+            departmentSearch.value.trim().toLowerCase();
+
+        const selectedStatus =
+            statusFilter.value;
+
+        departmentRows.forEach(function (row) {
+
+            const searchText =
+                row.dataset.search.toLowerCase();
+
+            const rowStatus =
+                row.dataset.status;
+
+            const matchesSearch =
+                searchText.includes(searchValue);
+
+            const matchesStatus =
+                selectedStatus === 'all' ||
+                rowStatus === selectedStatus;
+
+            row.style.display =
+                matchesSearch && matchesStatus
+                    ? ''
+                    : 'none';
+
+        });
+    }
+
+    departmentSearch.addEventListener(
+        'input',
+        filterDepartments
+    );
+    statusFilter.addEventListener(
+        'change',
+        filterDepartments
+    );
+
+    /* ============================================================
+       ESCAPE KEY
+       ============================================================ */
+
+    document.addEventListener('keydown', function (event) {
+
+        if (event.key === 'Escape') {
+
+            closeNewDepartmentModal();
+            closeEditModal();
+        }
+    });
+    /* ============================================================
+       CLICK OUTSIDE MODAL
+       ============================================================ */
+    document
+        .getElementById('newDepartmentModal')
+        .addEventListener('click', function (event) {
+
+            if (event.target === this) {
+                closeNewDepartmentModal();
+            }
+
+        });
+
+    document
+        .getElementById('editDepartmentModal')
+        .addEventListener('click', function (event) {
+
+            if (event.target === this) {
+                closeEditModal();
+            }
+
+        });
+</script>
+
+{% endblock %}
