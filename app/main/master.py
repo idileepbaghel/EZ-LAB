@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, session
 import pymysql
 from app.db import get_db_connection
+from .helpers import exists_department
 
 master_bp = Blueprint('master',__name__)
 
@@ -13,8 +14,12 @@ def departments():
             sort_order = request.form.get('sort_order', '0').strip()
             status = request.form.get('status', 'Active').strip()
 
-            if not name:
-                flash('Department name is required.', 'error')
+            if not name or not code:
+                flash('Department name and code are required.', 'error')
+                return redirect(url_for('master.departments'))
+
+            if (exists_department(name,code)):
+                flash('Department name or code already exists.', 'error')
                 return redirect(url_for('master.departments'))
 
             try:
